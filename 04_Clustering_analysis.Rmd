@@ -1,0 +1,257 @@
+```{r}
+suppressPackageStartupMessages({
+  library(Matrix) # Required to work with sparse matrices
+  library(dplyr)
+  library(Seurat)
+  library(patchwork)
+  library(future) # For parallelization
+  library(stringr)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(org.Hs.eg.db)
+})
+```
+
+```{r}
+#Set/Create Working Directory to Folder
+wd <- "/raida/ayaka.mori/integrative_dp/rna_preprocessing/preprocessing_output_simple"
+dir.create(wd, showWarnings = FALSE, recursive = TRUE)
+knitr::opts_knit$set(root.dir = wd)
+```
+
+```{r}
+#scriptPath <- "/raida/ayaka.mori/integrative_dp/script"
+#source(paste0(scriptPath, "/matrix_helpers.R"))
+#source(paste0(scriptPath, "/plotting_config.R"))
+#source(paste0(scriptPath, "/seurat_helpers.R"))
+#source(paste0(scriptPath, "/misc_helpers.R"))
+#source(paste0(scriptPath, "/sample_metadata.R"))
+
+#plotDir <- paste0(wd,"/raw_qc")
+#dir.create(plotDir, showWarnings = FALSE, recursive = TRUE)
+```
+
+```{r}
+obj <- readRDS(file = paste0(wd, "/preproceessed.rds"))
+```
+
+
+```{r}
+# Identify genes we want to blacklist during clustering
+rawCounts <- GetAssayData(object=obj, slot="counts")
+# mitochondrial:
+mt.genes <- grep(pattern = "^MT-", x = rownames(rawCounts), value = TRUE)
+# Cell cycle (These are loaded by Seurat)
+s.genes <- cc.genes$s.genes
+g2m.genes <- cc.genes$g2m.genes
+
+# X/Y chromosome genes:
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+geneGR <- GenomicFeatures::genes(txdb)
+sexGenesGR <- geneGR[seqnames(geneGR) %in% c("chrY", "chrX")]
+matchedGeneSymbols <- AnnotationDbi::select(org.Hs.eg.db,
+                        keys = sexGenesGR$gene_id,
+                        columns = c("ENTREZID", "SYMBOL"),
+                        keytype = "ENTREZID")
+sexChr.genes <- matchedGeneSymbols$SYMBOL
+
+
+# Genes to ignore (just for clustering purposes)
+blacklist.genes <- c(
+    mt.genes,
+    sexChr.genes,
+    s.genes,
+    g2m.genes
+)
+
+# Add cell cycle information now (Using Seurat):
+obj <- CellCycleScoring(obj, s.features=s.genes, g2m.features=g2m.genes, set.ident=FALSE)
+```
+
+```{r}
+obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^MT-")
+# Visualize QC metrics as a violin plot
+VlnPlot(obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3, pt.size = 0.1)
+```
+
+
+```{r}
+#Visualize feature-feature relationships
+plot1 <- FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+plot1 + plot2
+```
+
+```{r}
+#Filter cells based on QC metrics
+obj <- subset(obj, subset = nFeature_RNA > 200 & nFeature_RNA < 7000 & percent.mt < 10)
+```
+
+```{r}
+#Visualize feature-feature relationships
+plot1 <- FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+plot1 + plot2
+```
+
+```{r}
+#Normalizing the data
+obj <- NormalizeData(obj)
+```
+
+```{r}
+#SCTransform(obj, vars.to.regress = "percent.mt", verbose = FALSE)
+obj <- SCTransform(obj, vars.to.regress = "percent.mt", verbose = FALSE)
+```
+
+```{r}
+obj <- RunPCA(obj, features = VariableFeatures(object = obj))
+```
+
+```{r}
+ElbowPlot(obj, ndims = 50)
+```
+
+```{r}
+library(harmony)
+obj <- obj %>% RunHarmony("Sample", plot_convergence = TRUE)
+```
+
+```{r}
+VlnPlot(obj, features = "PC_1", group.by = "Sample", pt.size = 0)
+DimPlot(obj, reduction = "harmony", pt.size = 0.1, group.by = "Sample")
+DimPlot(obj, reduction = "harmony", pt.size = 0.1, group.by = "diseaseStatus")
+ElbowPlot(obj, ndims = 50, reduction = "harmony")
+```
+
+```{r}
+obj <- RunUMAP(obj, reduction = "harmony", dims = 1:20, n.neighbors = 50L, min.dist = 0.5)
+obj <- FindNeighbors(obj, dims = 1:20)
+obj <- FindClusters(obj, resolution = 0.8)
+```
+
+```{r}
+# Store cluster information in metadata
+obj$Clusters <- Idents(obj)
+```
+
+```{r}
+sample_colors <- c("GSM6532919_AA2" = "#CAB2D6", "GSM6532920_AA4" = "#B2DF8A", "GSM6532921_AA7" = "#FDBF6F",
+   "GSM6532922_AA8" = "#A6CCC3", "GSM6532923_C_PB1" = "#E31A1C",
+   "GSM6532924_C_PB2" = "#33A02C", "GSM6532925_C_PB3" = "#FB9A99", "GSM6532926_C_SD1" = "#FF7F00",
+   "GSM6532927_C_SD2" = "#CCFFFF", "GSM6532928_C_SD3" = "#000000")
+DimPlot(obj,reduction="umap", group.by = "Sample", cols = sample_colors)
+DimPlot(obj,reduction="umap", group.by = "Clusters", label = TRUE)
+```
+
+```{r}
+#3/19
+#library(ggplot2)
+#pdf("Clustering.pdf")
+#DimPlot(obj,reduction="umap", group.by = "Clusters", label = TRUE)+
+#  theme(aspect.ratio = 3/4)
+#dev.off()
+```
+
+```{r}
+#sample_cmap <- readRDS("/raida/ayaka.mori/integrative_dp/script/sample_cmap.rds")
+#sample_cmap <- sample_cmap[names(sample_cmap) %in% unique(obj$Sample)]
+
+#disease_cmap <- head(cmaps_BOR$stallion, 3)
+#names(disease_cmap) <- c("AA", "C_SD", "C_PB")
+```
+
+```{r}
+# Save clustered object here:
+#saveRDS(obj, file = paste0(wd, "/preclustered.rds"))
+```
+
+```{r}
+# annotation
+RidgePlot(obj, features = c("KRT14", "KRT5", "KRT15", "KRT10", "SOX9")) #Keratinocytes
+```
+
+```{r}
+RidgePlot(obj, features = c("CLEC9A", "XCR1")) #Myeloid(CLEC9a.DC)
+RidgePlot(obj, features = c("CLEC9A")) #Myeloid(CLEC9a.DC)
+RidgePlot(obj, features = c("XCR1")) #Myeloid(CLEC9a.DC)
+RidgePlot(obj, features = c("CD1A")) #Myeloid(DCs_1)
+RidgePlot(obj, features = c("CD14", "CD163")) #Myeloid(Macs_1)
+RidgePlot(obj, features = c("CD14")) #Myeloid(Macs_1)
+RidgePlot(obj, features = c("CD163")) #Myeloid(Macs_1)
+RidgePlot(obj, features = c("CCL19", "CD200")) #Myeloid(M1_Macs)
+RidgePlot(obj, features = c("CCL19")) #Myeloid(M1_Macs)
+RidgePlot(obj, features = c("CD200")) #Myeloid(M1_Macs)
+RidgePlot(obj, features = c("CD79A")) #Myeloid(Plasma)
+```
+
+```{r}
+RidgePlot(obj, features = c("CD3D", "IKZF2", "CCL5", "CD8A"))#Tcells
+```
+
+```{r}
+RidgePlot(obj, features = c("KIT", "HPGD", "TPSB2")) #Mastcells
+```
+
+```{r}
+RidgePlot(obj, features = c("THY1","COL1A1","COL11A1")) #Fibroblasts
+```
+
+```{r}
+RidgePlot(obj, features = c("MYL9","TPM1","TAGLN")) #Muscle
+```
+
+```{r}
+RidgePlot(obj, features = c("SELE","VWF","PECAM1","CD200")) #Endothelial
+```
+
+```{r}
+RidgePlot(obj, features = c("LYVE1","FLT4","VWF","PECAM1","CD200")) #Lymphatic
+```
+
+```{r}
+RidgePlot(obj, features = c("MLANA", "MITF","SOX10", "KIT")) #Melanocytes
+```
+
+```{r}
+RidgePlot(obj, features = c("SOX10", "ITGB8")) #McSc
+```
+
+```{r}
+obj_tcell <- subset(obj, subset = Clusters %in% c("0","1","11")) #Tcells
+obj_fib <- subset(obj, subset = Clusters %in% c("2","3","10")) #Fibroblasts
+obj_mye <- subset(obj, subset = Clusters %in% c("4","12","22","23")) #Myeloid
+obj_end <- subset(obj, subset = Clusters %in% c("5","16")) #Endothelial
+obj_kera <- subset(obj, subset = Clusters %in% c("6","7","8","13","15","18")) #Keratinocytes
+obj_mus <- subset(obj, subset = Clusters %in% c("9","14")) #Muscle
+obj_mast <- subset(obj, subset = Clusters == "17") #Mastcells
+obj_mela <- subset(obj, subset = Clusters == "20") #Melanocytes
+obj_lym <- subset(obj, subset = Clusters == "21") #Lymphatic
+obj_other <- subset(obj, subset = Clusters == "19") #Other
+```
+
+```{r}
+obj.meta <- obj@meta.data
+obj.meta$clust_chat <- c("")
+obj.meta[colnames(obj_tcell), ] $clust_chat <- "Tcells"
+obj.meta[colnames(obj_fib), ] $clust_chat <- "Fibroblasts"
+obj.meta[colnames(obj_mye), ] $clust_chat <- "Myeloid"
+obj.meta[colnames(obj_end), ] $clust_chat <- "Endothelial"
+obj.meta[colnames(obj_kera), ] $clust_chat <- "Keratinocytes"
+obj.meta[colnames(obj_mus), ] $clust_chat <- "Muscle"
+obj.meta[colnames(obj_mast), ] $clust_chat <- "Mastcells"
+obj.meta[colnames(obj_mela), ] $clust_chat <- "Melanocytes"
+obj.meta[colnames(obj_lym), ] $clust_chat <- "Lymphatic"
+obj.meta[colnames(obj_other), ] $clust_chat <- "Other"
+
+```
+
+```{r}
+obj.meta.use <- c(colnames(obj_tcell),colnames(obj_fib),colnames(obj_mye),colnames(obj_end),colnames(obj_kera),colnames(obj_mus),colnames(obj_mast),colnames(obj_mela),colnames(obj_lym),colnames(obj_other))
+obj <- obj[, obj.meta.use]
+obj.meta <- obj.meta[obj.meta.use, ]
+obj@meta.data <- obj.meta
+```
+
+```{r}
+saveRDS(obj, file = paste0(wd, "/scalp.rds"))
+```

@@ -1,0 +1,158 @@
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(Seurat)
+  library(patchwork)
+  library(future) # For parallelization
+  library(Matrix) # Required to work with sparse matrices
+  library(stringr)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(org.Hs.eg.db)
+})
+```
+
+```{r}
+options(future.globals.maxSize = 3000 * 1024 ^ 2)
+```
+
+```{r}
+#Set/Create Working Directory to Folder
+wd <- "/raida/ayaka.mori/integrative_dp/rna_preprocessing/preprocessing_output_simple"
+dir.create(wd, showWarnings = FALSE, recursive = TRUE)
+knitr::opts_knit$set(root.dir = wd)
+```
+
+```{r}
+# scriptPath <- "/raida/ayaka.mori/integrative_dp/script"
+# source(paste0(scriptPath, "/misc_helpers.R"))
+# source(paste0(scriptPath, "/matrix_helpers.R"))
+# source(paste0(scriptPath, "/plotting_config.R"))
+# source(paste0(scriptPath, "/seurat_helpers.R"))
+# source(paste0(scriptPath, "/sample_metadata.R"))
+```
+
+```{r}
+obj <- readRDS(paste0(wd, "/scalp.rds"))
+```
+
+```{r}
+obj_tcell <- subset(obj, subset = clust_chat == "Tcells") 
+obj_fib <- subset(obj, subset = clust_chat == "Fibroblasts") 
+obj_mye <- subset(obj, subset = clust_chat == "Myeloid") 
+obj_end <- subset(obj, subset = clust_chat == "Endothelial") 
+obj_kera <- subset(obj, subset = clust_chat == "Keratinocytes") 
+obj_mus <- subset(obj, subset = clust_chat == "Muscle") 
+obj_mast <- subset(obj, subset = clust_chat == "Mastcells") 
+obj_mela <- subset(obj, subset = clust_chat == "Melanocytes") 
+obj_lym <- subset(obj, subset = clust_chat == "Lymphatic") 
+obj_other <- subset(obj, subset = clust_chat == "Other") 
+```
+
+```{r}
+library(ggplot2)
+DimPlot(obj, reduction = "umap", group.by = "clust_chat", label = TRUE) + ggtitle("Clusters")
+```
+```{r}
+#3/19
+# library(ggplot2)
+# pdf("Cell_type_annotation.pdf")
+# DimPlot(obj, reduction = "umap", group.by = "clust_chat", label = TRUE) + ggtitle("Clusters") + theme(aspect.ratio = 3/4)
+# dev.off()
+```
+
+
+```{r}
+obj_fib <- SCTransform(obj_fib, vars.to.regress = "percent.mt", verbose = FALSE)
+```
+
+```{r}
+obj_fib <- RunPCA(obj_fib, features = VariableFeatures(object = obj_fib))
+```
+
+```{r}
+ElbowPlot(obj_fib, ndims = 50)
+```
+
+```{r}
+VlnPlot(obj_fib, features = "PC_1", group.by = "Sample", pt.size = 0)
+DimPlot(obj_fib, reduction = "harmony", pt.size = 0.1, group.by = "Sample")
+DimPlot(obj_fib, reduction = "pca", pt.size = 0.1, group.by = "Sample")
+```
+
+```{r}
+obj_fib <- RunUMAP(obj_fib, reduction = "pca", dims = 1:20)
+obj_fib <- FindNeighbors(obj_fib, dims = 1:20)
+obj_fib <- FindClusters(obj_fib, resolution = 0.2)
+```
+
+```{r}
+library(ggplot2)
+DimPlot(obj_fib, reduction = "umap", group.by = "SCT_snn_res.0.2", label = TRUE) + ggtitle("Clusters")
+```
+
+```{r}
+#3/19
+# library(ggplot2)
+# pdf("Subclustering.pdf")
+# DimPlot(obj_fib, reduction = "umap", group.by = "SCT_snn_res.0.2", label = TRUE) + ggtitle("Clusters") + theme(aspect.ratio = 3/4)
+# dev.off()
+```
+
+```{r}
+#annotation
+RidgePlot(obj_fib, features = c("WNT5A", "PTCH1", "HHIP")) #DemalPapilla
+RidgePlot(obj_fib, features = c("SOX2", "EDNRA"))  #DermalSheath
+```
+
+```{r}
+obj_fib_dp <- subset(obj_fib, subset = SCT_snn_res.0.2 == "8")
+obj_fib_sh <- subset(obj_fib, subset = SCT_snn_res.0.2 == "1")
+obj_fib_other <- subset(obj_fib, subset = SCT_snn_res.0.2 %in% c("0","2","3","4","5","6","7","9"))
+```
+
+```{r}
+obj.meta <- obj@meta.data
+obj.meta$clust_chat_new <- c("")
+obj.meta[colnames(obj_tcell), ] $clust_chat_new <- "Tcells"
+
+obj.meta[colnames(obj_fib_dp), ] $clust_chat_new <- "DermalPapilla"
+obj.meta[colnames(obj_fib_sh), ] $clust_chat_new <- "DermalSheath"
+obj.meta[colnames(obj_fib_other), ] $clust_chat_new <- "OtherFibroblasts"
+
+obj.meta[colnames(obj_mye), ] $clust_chat_new <- "Myeloid"
+obj.meta[colnames(obj_end), ] $clust_chat_new <- "Endothelial"
+obj.meta[colnames(obj_kera), ] $clust_chat_new <- "Keratinocytes"
+obj.meta[colnames(obj_mus), ] $clust_chat_new <- "Muscle"
+obj.meta[colnames(obj_mast), ] $clust_chat_new <- "Mastcells"
+obj.meta[colnames(obj_mela), ] $clust_chat_new <- "Melanocytes"
+obj.meta[colnames(obj_lym), ] $clust_chat_new <- "Lymphatic"
+obj.meta[colnames(obj_other), ] $clust_chat_new <- "Other"
+
+```
+
+```{r}
+obj.meta.use <- c(colnames(obj_tcell),colnames(obj_fib_dp),colnames(obj_fib_sh),
+                  colnames(obj_fib_other),colnames(obj_mye),colnames(obj_end),colnames(obj_kera),
+                  colnames(obj_mus),colnames(obj_mast),colnames(obj_mela),colnames(obj_lym),
+                  colnames(obj_other))
+obj <- obj[, obj.meta.use]
+obj.meta <- obj.meta[obj.meta.use, ]
+obj@meta.data <- obj.meta
+```
+
+```{r}
+library(ggplot2)
+DimPlot(obj, reduction = "umap", group.by = "clust_chat_new", label = TRUE) + ggtitle("Clusters")
+```
+
+```{r}
+#3/19
+# library(ggplot2)
+# pdf("Subclustering_annotation.pdf")
+# DimPlot(obj, reduction = "umap", group.by = "clust_chat_new", label = TRUE) + ggtitle("Clusters") + theme(aspect.ratio = 3/4)
+# dev.off()
+```
+
+```{r}
+saveRDS(obj, file = paste0(wd, "/scalp_fib.rds"))
+```
