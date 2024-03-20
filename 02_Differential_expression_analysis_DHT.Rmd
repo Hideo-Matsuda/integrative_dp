@@ -1,0 +1,56 @@
+```{r}
+# Load library
+library(TCC)
+```
+
+```{r}
+# Read Data
+data <- read.table("DHT_count_2d.csv", 
+                    header = TRUE, 
+                    row.names = 1, 
+                    sep=",", 
+                    quote="")
+```
+
+```{r}
+# Grouping
+data.cl <- rep(0, ncol(data))
+# Function for grouping
+convert2cl <- function(x, df) {
+  grep(x, colnames(df))
+}
+group <- list(c("empty2D1", "empty2D2", "empty2D3"), c("DHT2D1", "DHT2D2", "DHT2D3"))
+
+for (i in 1:length(group)) {
+  data.cl[unlist(lapply(group[[i]], convert2cl, df = data))] = i
+}
+```
+   
+```{r} 
+# Create TCC Object
+tcc <- new("TCC", data, data.cl)
+tcc <- filterLowCountGenes(tcc, low.count = 30)
+```
+
+```{r}
+# Run TCC
+tcc <- calcNormFactors(tcc, 
+                       norm.method = "tmm",
+                       test.method = "edger",
+                       iteration = 3, 
+                       FDR = 0.05, 
+                       floorPDEG = 0.05)
+```
+
+```{r}
+# Estimate DEGs
+tcc <- estimateDE(tcc, 
+                  test.method = "edger", 
+                  FDR = 0.05)
+```
+```{r}    
+# Save the result
+result <- getResult(tcc, 
+                    sort = TRUE)
+write.csv(result, file = "DEG_DHT.csv", row.names = FALSE, quote = FALSE)
+```

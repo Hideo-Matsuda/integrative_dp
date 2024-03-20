@@ -1,0 +1,100 @@
+```{r}
+# Load library
+library(TCC)
+```
+
+```{r}
+# Read Data
+data_2h <- read.table("Hair_count_2h.csv", header = TRUE, row.names = 1, sep=",", quote="")
+data_6h <- read.table("Hair_count_6h.csv", header = TRUE, row.names = 1, sep=",", quote="")
+data_24h <- read.table("Hair_count_24h.csv", header = TRUE, row.names = 1, sep=",", quote="")
+```
+
+```{r}
+# Grouping
+data.cl_2h <- rep(0, ncol(data_2h))
+data.cl_6h <- rep(0, ncol(data_6h))
+data.cl_24h <- rep(0, ncol(data_24h))
+
+# Function for grouping
+convert2cl_2h <- function(x, df) {
+  grep(x, colnames(df))
+}
+convert2cl_6h <- function(x, df) {
+  grep(x, colnames(df))
+}
+convert2cl_24h <- function(x, df) {
+  grep(x, colnames(df))
+}
+group_2h <- list(c("Cont.2hr.1","Cont.2hr.2","Cont.2hr.3","Cont.2hr.4","Cont.2hr.5"),c("N793.2hr.1","N793.2hr.2","N793.2hr.3","N793.2hr.4","N793.2hr.5"))
+group_6h <- list(c("Cont.6hr.1","Cont.6hr.2","Cont.6hr.3","Cont.6hr.4","Cont.6hr.5"),c("N793.6hr.1","N793.6hr.2","N793.6hr.3","N793.6hr.4","N793.6hr.5"))
+group_24h <- list(c("Cont.24hr.1","Cont.24hr.2","Cont.24hr.3","Cont.24hr.4","Cont.24hr.5"),c("N793.24hr.1","N793.24hr.2","N793.24hr.3","N793.24hr.4","N793.24hr.5"))
+
+for (i in 1:length(group_2h)) {
+  data.cl_2h[unlist(lapply(group_2h[[i]], convert2cl_2h, df = data_2h))] = i
+}
+for (i in 1:length(group_6h)) {
+  data.cl_6h[unlist(lapply(group_6h[[i]], convert2cl_6h, df = data_6h))] = i
+}
+for (i in 1:length(group_24h)) {
+  data.cl_24h[unlist(lapply(group_24h[[i]], convert2cl_24h, df = data_24h))] = i
+}
+```
+   
+```{r} 
+# Create TCC Object
+tcc_2h <- new("TCC", data_2h, data.cl_2h)
+tcc_6h <- new("TCC", data_6h, data.cl_6h)
+tcc_24h <- new("TCC", data_24h, data.cl_24h)
+
+tcc_2h <- filterLowCountGenes(tcc_2h, low.count = 30)
+tcc_6h <- filterLowCountGenes(tcc_6h, low.count = 30)
+tcc_24h <- filterLowCountGenes(tcc_24h, low.count = 30)
+
+```
+
+```{r}
+# Run TCC
+tcc_2h <- calcNormFactors(tcc_2h, 
+                       norm.method = "tmm",
+                       test.method = "edger",
+                       iteration = 3, 
+                       FDR = 0.05, 
+                       floorPDEG = 0.05)
+tcc_6h <- calcNormFactors(tcc_6h, 
+                       norm.method = "tmm",
+                       test.method = "edger",
+                       iteration = 3, 
+                       FDR = 0.05, 
+                       floorPDEG = 0.05)
+tcc_24h <- calcNormFactors(tcc_24h, 
+                       norm.method = "tmm",
+                       test.method = "edger",
+                       iteration = 3, 
+                       FDR = 0.05, 
+                       floorPDEG = 0.05)
+```
+
+```{r}
+# Estimate DEGs
+tcc_2h <- estimateDE(tcc_2h, 
+                  test.method = "edger", 
+                  FDR = 0.05)
+tcc_6h <- estimateDE(tcc_6h, 
+                  test.method = "edger", 
+                  FDR = 0.05)
+tcc_24h <- estimateDE(tcc_24h, 
+                  test.method = "edger", 
+                  FDR = 0.05)
+```
+
+```{r}    
+# Save the result
+result_2h <- getResult(tcc_2h, sort = TRUE)
+result_6h <- getResult(tcc_6h, sort = TRUE)
+result_24h <- getResult(tcc_24h, sort = TRUE)
+
+write.csv(result_2h, file = "DEG_N793_2hr_2hr.csv", row.names = FALSE, quote = FALSE)
+write.csv(result_6h, file = "DEG_N793_6hr_6hr.csv", row.names = FALSE, quote = FALSE)
+write.csv(result_24h, file = "DEG_N793_24hr_24hr.csv", row.names = FALSE, quote = FALSE)
+```
