@@ -28,7 +28,7 @@ cd integrateive_dp
 
 2. Install all tools shown above.
 
-# Differential expression analysis of bulk RNA-seq datasets.
+## Differential expression analysis of bulk RNA-seq datasets.
 
 - RNA-seq of dermal papilla (DP) cells for co-cultuered with Lactic acid bacteria (LAB) N793 strain and treated with dihydrotestosterone (DHT).
 
@@ -47,15 +47,15 @@ See "03_VennDiagram_DEGs.html" for the result of the analysis.
 - Single-cell RNA-seq for hair disease, androgenetic alopecia (AGA).
 
 
-4. Obtain a preprocessed Seurat object from a repository (Ober-Reynolds, et al., Nature Genetics, 2023),
+4. Obtain a preprocessed Seurat object from a repository [scScalpChromatin] https://github.com/GreenleafLab/scScalpChromatin (Ober-Reynolds, et al., Nature Genetics, 2023).
 ```
 git clone https://github.com/GreenleafLab/scScalpChromatin
 ```
 
 Run "01_scRNA_preprocess.R" at directory ./scScalpChromatin/rna_preprocessing/
-Obtain "preprocessed.rds" and copy it to directory "./rna_preprocessing/preprocessing_output_simple" in this repository
+Obtain "preprocessed.rds" and copy it to directory "./rna_preprocessing/preprocessing_output_simple" in this repository.
 
-5. Clustering and celltype identification of single-cell RNA-seq dataset. Run the following files using RStudio
+5. Clustering and celltype identification of single-cell RNA-seq dataset. Run the following files using RStudio.
 ```
 04_Clustering_analysis.Rmd
 05_Subclustering_analysis.Rmd
@@ -65,7 +65,7 @@ Obtain "preprocessed.rds" and copy it to directory "./rna_preprocessing/preproce
 Figure 3 (a), (b), and (c) were obtained by this analysis.
 See "04_Clustering_analysis.html", "05_Subclustering_analysis.html" for the result of the analysis.
 
-6. Cell-cell communication analysis between dermal papilla cells and other cells in the dataset. Run the following file using RStudio
+6. Cell-cell communication analysis between dermal papilla cells and other cells in the dataset. Run the following file using RStudio.
 ```
 06_Cell_cell_communication_analysis.Rmd
 ```
@@ -73,7 +73,7 @@ See "04_Clustering_analysis.html", "05_Subclustering_analysis.html" for the resu
 Tables 1 and 2 were obtained by this analysis.
 See "06_Cell_cell_communication_analysis.html" for the result of the analysis.
 
-7. Draw Venn diagram. Run the following file using RStudio
+7. Draw Venn diagram. Run the following file using RStudio.
 ```
 07_VennDiagram_LR.Rmd
 ```
@@ -81,6 +81,6 @@ See "06_Cell_cell_communication_analysis.html" for the result of the analysis.
 Figure 4 (a) and (b) were obtained by this analysis.
 See "07_VennDiagram_LR.html" for the result of the analysis.
 
-# Data
+## Data
 
 The dermal papilla sequencing data used in the paper is available in the sequence read archive (SRA) under accessions [PRJNA1089389](https://www.ncbi.nlm.nih.gov/sra/PRJNA1089389).
