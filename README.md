@@ -47,7 +47,7 @@ See "03_VennDiagram_DEGs.html" for the result of the analysis.
 - Single-cell RNA-seq for hair disease, androgenetic alopecia (AGA).
 
 
-4. Obtain a preprocessed Seurat object from a repository [scScalpChromatin] https://github.com/GreenleafLab/scScalpChromatin (Ober-Reynolds, et al., Nature Genetics, 2023).
+4. Obtain a preprocessed Seurat object from a repository [scScalpChromatin](https://github.com/GreenleafLab/scScalpChromatin) (Ober-Reynolds, et al., Nature Genetics, 2023).
 ```
 git clone https://github.com/GreenleafLab/scScalpChromatin
 ```
