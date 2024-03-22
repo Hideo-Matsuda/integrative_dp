@@ -36,11 +36,10 @@ cd integrateive_dp
 ```
 01_Differential_expression_analysis_N793.Rmd
 02_Differential_expression_analysis_DHT.Rmd
-03_VennDiagram_DEGs.Rmd
+03_VennDiagram_of_candidate_genes.Rmd
 ```
 
-Figures 2 (a) and (b) were obtained by this analysis.
-See "03_VennDiagram_DEGs.html" for the result of the analysis.
+Figure 2 is obtained by running "Figure2_VennDiagram_of_candidate_genes.Rmd".
 
 ## Cell-cell communication analysis of single-cell RNA-seq datasets.
 
@@ -62,8 +61,7 @@ Obtain "preprocessed.rds" and copy it to directory "./rna_preprocessing/preproce
 06_Cell_cell_communication_analysis.Rmd
 07_VennDiagram_LR.Rmd
 ```
-Figure 3 (a), (b), and (c) were obtained by this analysis.
-See "04_Clustering_analysis.html", "05_Subclustering_analysis.html" for the result of the analysis.
+Figure 3 is obtained by "Figure3_UMAP.Rmd".
 
 6. Cell-cell communication analysis between dermal papilla cells and other cells in the dataset. Run the following file using RStudio.
 ```
@@ -78,8 +76,7 @@ See "06_Cell_cell_communication_analysis.html" for the result of the analysis.
 07_VennDiagram_LR.Rmd
 ```
 
-Figure 4 (a) and (b) were obtained by this analysis.
-See "07_VennDiagram_LR.html" for the result of the analysis.
+Figure 4 is obtained by "Figure4_Venn_diagram_of_genes.Rmd".
 
 ## Data
 
