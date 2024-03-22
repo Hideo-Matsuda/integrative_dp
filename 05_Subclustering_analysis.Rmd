@@ -12,23 +12,8 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-options(future.globals.maxSize = 3000 * 1024 ^ 2)
-```
-
-```{r}
-#Set/Create Working Directory to Folder
+#Set Working Directory
 wd <- "/raida/ayaka.mori/integrative_dp/rna_preprocessing/preprocessing_output_simple"
-dir.create(wd, showWarnings = FALSE, recursive = TRUE)
-knitr::opts_knit$set(root.dir = wd)
-```
-
-```{r}
-# scriptPath <- "/raida/ayaka.mori/integrative_dp/script"
-# source(paste0(scriptPath, "/misc_helpers.R"))
-# source(paste0(scriptPath, "/matrix_helpers.R"))
-# source(paste0(scriptPath, "/plotting_config.R"))
-# source(paste0(scriptPath, "/seurat_helpers.R"))
-# source(paste0(scriptPath, "/sample_metadata.R"))
 ```
 
 ```{r}
@@ -52,15 +37,6 @@ obj_other <- subset(obj, subset = clust_chat == "Other")
 library(ggplot2)
 DimPlot(obj, reduction = "umap", group.by = "clust_chat", label = TRUE) + ggtitle("Clusters")
 ```
-```{r}
-#3/19
-# library(ggplot2)
-# pdf("Cell_type_annotation.pdf")
-# DimPlot(obj, reduction = "umap", group.by = "clust_chat", label = TRUE) + ggtitle("Clusters") + theme(aspect.ratio = 3/4)
-# dev.off()
-```
-
-
 ```{r}
 obj_fib <- SCTransform(obj_fib, vars.to.regress = "percent.mt", verbose = FALSE)
 ```
@@ -89,15 +65,6 @@ obj_fib <- FindClusters(obj_fib, resolution = 0.2)
 library(ggplot2)
 DimPlot(obj_fib, reduction = "umap", group.by = "SCT_snn_res.0.2", label = TRUE) + ggtitle("Clusters")
 ```
-
-```{r}
-#3/19
-# library(ggplot2)
-# pdf("Subclustering.pdf")
-# DimPlot(obj_fib, reduction = "umap", group.by = "SCT_snn_res.0.2", label = TRUE) + ggtitle("Clusters") + theme(aspect.ratio = 3/4)
-# dev.off()
-```
-
 ```{r}
 #annotation
 RidgePlot(obj_fib, features = c("WNT5A", "PTCH1", "HHIP")) #DemalPapilla
@@ -127,7 +94,6 @@ obj.meta[colnames(obj_mast), ] $clust_chat_new <- "Mastcells"
 obj.meta[colnames(obj_mela), ] $clust_chat_new <- "Melanocytes"
 obj.meta[colnames(obj_lym), ] $clust_chat_new <- "Lymphatic"
 obj.meta[colnames(obj_other), ] $clust_chat_new <- "Other"
-
 ```
 
 ```{r}
@@ -144,15 +110,7 @@ obj@meta.data <- obj.meta
 library(ggplot2)
 DimPlot(obj, reduction = "umap", group.by = "clust_chat_new", label = TRUE) + ggtitle("Clusters")
 ```
-
 ```{r}
-#3/19
-# library(ggplot2)
-# pdf("Subclustering_annotation.pdf")
-# DimPlot(obj, reduction = "umap", group.by = "clust_chat_new", label = TRUE) + ggtitle("Clusters") + theme(aspect.ratio = 3/4)
-# dev.off()
-```
-
-```{r}
+saveRDS(obj_fib, file = paste0(wd, "/fib.rds"))
 saveRDS(obj, file = paste0(wd, "/scalp_fib.rds"))
 ```

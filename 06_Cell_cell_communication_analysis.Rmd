@@ -7,78 +7,42 @@ library(Seurat)
 ```
 
 ## CCC Resources
-`liana` provides CCC resources obtained and formatted via [`OmnipathR`](https://github.com/saezlab/OmnipathR) which are then converted to the appropriate format to each method.
 ```{r liana_resource, warning = FALSE}
 # Resource currently included in OmniPathR (and hence `liana`) include:
 show_resources()
-
-# A list of resources can be obtained using the `select_resource()` function:
-# See `?select_resource()` documentation for further information.
-# select_resource(c('OmniPath')) %>% dplyr::glimpse() 
 ```
   
-  
 ## CCC Methods
-Each of the resources can then be run with any of the following methods:
 ```{r liana_method, warning = FALSE}
 # Resource currently included in OmniPathR (and hence `liana`) include:
 show_methods()
 ```
-Note that the different algorithms (or scoring measures) used in `sca`, `natmi`,
-`connectome`, `cellphonedb`, `cytotalk`'s crosstalk scores, and `logfc` were re-implemented in LIANA.
-Yet, the original method pipelines can be called via the `call_*` functions.
 
-## `liana` wrapper function
-
-To run `liana`, we will use a down-sampled toy *HUMAN* PBMCs scRNA-Seq data set, obtained from [SeuratData](https://github.com/satijalab/seurat-data).
-
-`liana` takes `Seurat` and `SingleCellExperiment` objects as input, containing processed counts and clustered cells.
 ```{r load_data}
 wd <- "/raida/ayaka.mori/integrative_dp/rna_preprocessing/preprocessing_output_simple"
 obj <- readRDS(paste0(wd, "/scalp_fib.rds"))
 ```
-
-`liana_wrap` calls a number of methods and and each method is run with the provided resource(s).
-
-We will now call all methods that are currently available in liana.
-
-Here we use only the `Consensus` (Default) CCC resource, but any of the 
-aforementioned ones (available via `show_resources()`) can be added to the `resource` parameter
 
 ```{r}
 obj_aa <- subset(obj, subset = diseaseStatus == "AA")
 obj_cpb <- subset(obj, subset = diseaseStatus == "C_PB")
 ```
 
+#aa
 ```{r}
 DimPlot(obj_aa, reduction = "umap", label = TRUE) + NoLegend()
 ```
-
 
 ```{r}
 obj_aa <- SetIdent(obj_aa, value = "clust_chat_new")
 DimPlot(obj_aa, reduction = "umap", label = TRUE) + NoLegend()
 ```
 
-
-# CCC resource = Consensus
-
 ```{r}
 # Run liana
 liana_test_aa <- liana_wrap(obj_aa)
 # Liana returns a list of results, each element of which corresponds to a method
 liana_test_aa %>% dplyr::glimpse()
-
-```
-
-```{r}
-saveRDS(liana_test_aa, file = "liana_aa_no_aggregate.rds")
-```
-
-```{r}
-cellchat_test_aa <- liana_wrap(obj_aa, method = "call_cellchat")
-# Liana returns a list of results, each element of which corresponds to a method
-cellchat_test_aa %>% dplyr::glimpse()
 ```
 
 ```{r}
@@ -90,7 +54,9 @@ dplyr::glimpse(liana_test_aa)
 ```
 
 ```{r}
-saveRDS(liana_test_aa, file = "liana_aa.rds")
+cellchat_test_aa <- liana_wrap(obj_aa, method = "call_cellchat")
+# Liana returns a list of results, each element of which corresponds to a method
+cellchat_test_aa %>% dplyr::glimpse()
 ```
 
 ```{r}
@@ -110,23 +76,11 @@ write.csv(liana_aa_merge, file = "liana_aa_merge.csv", row.names = FALSE)
 obj_cpb <- SetIdent(obj_cpb, value = "clust_chat_new")
 DimPlot(obj_cpb, reduction = "umap", label = TRUE) + NoLegend()
 ```
-# CCC resource = Consensus
-
 ```{r}
 # Run liana
 liana_test_cpb <- liana_wrap(obj_cpb)
 # Liana returns a list of results, each element of which corresponds to a method
 liana_test_cpb %>% dplyr::glimpse()
-```
-
-```{r}
-saveRDS(liana_test_cpb, file = "liana_cpb_no_aggregate.rds")
-```
-
-```{r}
-cellchat_test_cpb <- liana_wrap(obj_cpb, method = "call_cellchat")
-# Liana returns a list of results, each element of which corresponds to a method
-cellchat_test_cpb %>% dplyr::glimpse()
 ```
 
 ```{r}
@@ -138,11 +92,9 @@ dplyr::glimpse(liana_test_cpb)
 ```
 
 ```{r}
-saveRDS(liana_test_cpb, file = "liana_cpb.rds")
-```
-
-```{r}
-write.csv(liana_test_cpb, file = "liana_test_cpb.csv", row.names = FALSE)
+cellchat_test_cpb <- liana_wrap(obj_cpb, method = "call_cellchat")
+# Liana returns a list of results, each element of which corresponds to a method
+cellchat_test_cpb %>% dplyr::glimpse()
 ```
 
 ```{r}

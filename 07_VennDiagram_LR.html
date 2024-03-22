@@ -358,10 +358,7 @@ library(VennDiagram)</code></pre>
 <pre><code>## Loading required package: futile.logger</code></pre>
 <pre class="r"><code>#load LR-data
 LR_growth &lt;- read.csv(&quot;hair_growth_LR.csv&quot;, header = TRUE)
-LR_loss &lt;- read.csv(&quot;hair_loss_LR.csv&quot;, header = TRUE)
-#空白行削除
-LR_growth_clean &lt;- LR_growth[rowSums(LR_growth == &quot;&quot;) == 0, ]
-LR_loss_clean &lt;- LR_loss[rowSums(LR_loss == &quot;&quot;) == 0, ]</code></pre>
+LR_loss &lt;- read.csv(&quot;hair_loss_LR.csv&quot;, header = TRUE)</code></pre>
 <pre class="r"><code>#load LR-data
 LR_CellPhoneDB_growth &lt;- read.csv(&quot;CellPhoneDB_cpb.csv&quot;, header = TRUE)
 LR_CellChat_growth &lt;- read.csv(&quot;CellChat_cpb.csv&quot;, header = TRUE)

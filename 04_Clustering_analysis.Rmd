@@ -12,28 +12,13 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-#Set/Create Working Directory to Folder
+#Set Working Directory to Folder
 wd <- "/raida/ayaka.mori/integrative_dp/rna_preprocessing/preprocessing_output_simple"
-dir.create(wd, showWarnings = FALSE, recursive = TRUE)
-knitr::opts_knit$set(root.dir = wd)
-```
-
-```{r}
-#scriptPath <- "/raida/ayaka.mori/integrative_dp/script"
-#source(paste0(scriptPath, "/matrix_helpers.R"))
-#source(paste0(scriptPath, "/plotting_config.R"))
-#source(paste0(scriptPath, "/seurat_helpers.R"))
-#source(paste0(scriptPath, "/misc_helpers.R"))
-#source(paste0(scriptPath, "/sample_metadata.R"))
-
-#plotDir <- paste0(wd,"/raw_qc")
-#dir.create(plotDir, showWarnings = FALSE, recursive = TRUE)
 ```
 
 ```{r}
 obj <- readRDS(file = paste0(wd, "/preproceessed.rds"))
 ```
-
 
 ```{r}
 # Identify genes we want to blacklist during clustering
@@ -142,29 +127,6 @@ sample_colors <- c("GSM6532919_AA2" = "#CAB2D6", "GSM6532920_AA4" = "#B2DF8A", "
 DimPlot(obj,reduction="umap", group.by = "Sample", cols = sample_colors)
 DimPlot(obj,reduction="umap", group.by = "Clusters", label = TRUE)
 ```
-
-```{r}
-#3/19
-#library(ggplot2)
-#pdf("Clustering.pdf")
-#DimPlot(obj,reduction="umap", group.by = "Clusters", label = TRUE)+
-#  theme(aspect.ratio = 3/4)
-#dev.off()
-```
-
-```{r}
-#sample_cmap <- readRDS("/raida/ayaka.mori/integrative_dp/script/sample_cmap.rds")
-#sample_cmap <- sample_cmap[names(sample_cmap) %in% unique(obj$Sample)]
-
-#disease_cmap <- head(cmaps_BOR$stallion, 3)
-#names(disease_cmap) <- c("AA", "C_SD", "C_PB")
-```
-
-```{r}
-# Save clustered object here:
-#saveRDS(obj, file = paste0(wd, "/preclustered.rds"))
-```
-
 ```{r}
 # annotation
 RidgePlot(obj, features = c("KRT14", "KRT5", "KRT15", "KRT10", "SOX9")) #Keratinocytes

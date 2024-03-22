@@ -1,0 +1,77 @@
+```{r}
+#Load package
+library(VennDiagram)
+```
+
+```{r}
+#Load N793-data
+DEG_N793_2hr_2hr <- read.csv("DEG_N793_2hr_2hr.csv", header = TRUE)
+DEG_N793_6hr_6hr <- read.csv("DEG_N793_6hr_6hr.csv", header = TRUE)
+DEG_N793_24hr_24hr <- read.csv("DEG_N793_24hr_24hr.csv", header = TRUE)
+
+#Load dht-data
+DEG_DHT <- read.csv("DEG_DHT.csv", header = TRUE)
+```
+
+```{r}
+# Prepare a palette of 4 colors with R colorbrewer:
+library(RColorBrewer)
+myCol <- brewer.pal(4, "Pastel2")
+```
+
+```{r}
+#Detect hair growth genes
+N793_2h_up <- DEG_N793_2hr_2hr$gene_id[DEG_N793_2hr_2hr$q.value < 0.01 & DEG_N793_2hr_2hr$m.value > 0]
+N793_6h_up <- DEG_N793_6hr_6hr$gene_id[DEG_N793_6hr_6hr$q.value < 0.01 & DEG_N793_6hr_6hr$m.value > 0]
+N793_24h_up <- DEG_N793_24hr_24hr$gene_id[DEG_N793_24hr_24hr$q.value < 0.01 & DEG_N793_24hr_24hr$m.value > 0]
+DHT_down <- DEG_DHT$gene_id[DEG_DHT$q.value < 0.01 & DEG_DHT$m.value < 0]
+data_hair_growth <- list("2h" = N793_2h_up, "6h" = N793_6h_up, "24h" = N793_24h_up, "DHT" = DHT_down)
+venn_growth <- venn.diagram(data_hair_growth, 
+             width = 2000, height = 2000,
+             filename = NULL,
+             #filename = "up_0.01_test.png", 
+             #imagetype = "png",
+             resolution = 300,
+             # Circles
+             lwd = 2,
+             lty = 'blank',
+             fill = myCol,
+             # Numbers
+             cex = 2,
+             fontface = "plain",
+             fontfamily = "sans",
+             # Set names
+             cat.cex = 2,
+             cat.fontface = "plain",
+             cat.default.pos = "outer",
+             cat.fontfamily = "sans")
+library(grDevices)
+grid.draw(venn_growth)
+```
+
+```{r}
+#Detect hair loss genes
+N793_2h_down <- DEG_N793_2hr_2hr$gene_id[DEG_N793_2hr_2hr$q.value < 0.01 & DEG_N793_2hr_2hr$m.value < 0]
+N793_6h_down <- DEG_N793_6hr_6hr$gene_id[DEG_N793_6hr_6hr$q.value < 0.01 & DEG_N793_6hr_6hr$m.value < 0]
+N793_24h_down <- DEG_N793_24hr_24hr$gene_id[DEG_N793_24hr_24hr$q.value < 0.01 & DEG_N793_24hr_24hr$m.value < 0]
+DHT_up <- DEG_DHT$gene_id[DEG_DHT$q.value < 0.01 & DEG_DHT$m.value > 0]
+data_hair_loss <- list("2h" = N793_2h_down, "6h" = N793_6h_down, "24h" = N793_24h_down, "DHT" = DHT_up)
+venn_loss <- venn.diagram(data_hair_loss, 
+             width = 2000, height = 2000,
+             filename = NULL,
+             resolution = 300,
+              # Circles
+             lwd = 2,
+             lty = 'blank',
+             fill = myCol,
+             # Numbers
+             cex = 2,
+             fontface = "plain",
+             fontfamily = "sans",
+             # Set names
+             cat.cex = 2,
+             cat.fontface = "plain",
+             cat.default.pos = "outer",
+             cat.fontfamily = "sans")
+grid.draw(venn_loss)
+```

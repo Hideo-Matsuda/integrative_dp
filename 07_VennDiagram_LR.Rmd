@@ -7,9 +7,6 @@ library(VennDiagram)
 #load LR-data
 LR_growth <- read.csv("hair_growth_LR.csv", header = TRUE)
 LR_loss <- read.csv("hair_loss_LR.csv", header = TRUE)
-#空白行削除
-LR_growth_clean <- LR_growth[rowSums(LR_growth == "") == 0, ]
-LR_loss_clean <- LR_loss[rowSums(LR_loss == "") == 0, ]
 ```
 
 ```{r}

@@ -1,0 +1,35 @@
+```{r}
+library(Seurat)
+library(ggplot2)
+```
+
+```{r}
+#Set/Create Working Directory to Folder
+wd <- "/raida/ayaka.mori/integrative_dp/rna_preprocessing/preprocessing_output_simple"
+```
+
+```{r}
+obj <- readRDS(file = paste0(wd, "/scalp_fib.rds"))
+obj_fib <- readRDS(file = paste0(wd, "/fib.rds"))
+```
+
+```{r}
+#Figure3A
+png("Clustering.png")
+DimPlot(obj,reduction="umap", group.by = "Clusters", label = TRUE, label.size = 5) + ggtitle("Clusters") + theme(aspect.ratio = 3/4, plot.margin = margin(t = 0, r = 0, b = 0, l = 0)) + NoLegend()
+dev.off()
+```
+
+```{r}
+#Figure3B
+png("Subclustering.png")
+DimPlot(obj_fib, reduction = "umap", group.by = "SCT_snn_res.0.2", label = TRUE, label.size = 5) + ggtitle("Clusters") + theme(aspect.ratio = 3/4, plot.margin = margin(t = 0, r = 0, b = 0, l = 0)) + NoLegend()
+dev.off()
+```
+
+```{r}
+#Figure3C
+png("Subclustering_annotation.png")
+DimPlot(obj, reduction = "umap", group.by = "clust_chat_new", label = TRUE, label.size = 5) + ggtitle("Clusters") + theme(aspect.ratio = 3/4, plot.margin = margin(t = 0, r = 0, b = 0, l = 0)) + NoLegend()
+dev.off()
+```
