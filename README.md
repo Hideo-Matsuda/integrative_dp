@@ -19,7 +19,7 @@ Integrative analysis of bulk and single-cell RNA-seq datasets reveals key genes 
 - liana (tested with 0.1.13)
 
 
-## Installarion
+## Installation
 1. Clone and enter this repository:
 ```
 git clone https://github.com/Hideo-Matsuda/integrative_dp
